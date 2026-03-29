@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------------------
 # Configuration — edit these before first run
-# ---------------------------------------------------------------------------
 INSTANCE_NAME="quiz-app"
 ZONE="asia-southeast1-b"
 MACHINE_TYPE="e2-small"
 REMOTE_DIR="tapcet-lite"
-GIT_REPO=""   # e.g. https://github.com/youruser/tapcet-lite.git
+GIT_REPO="https://github.com/ChristianNemeno/tapcet-lite.git"   # e.g. https://github.com/youruser/tapcet-lite.git
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 info()  { echo "[INFO]  $*"; }
 warn()  { echo "[WARN]  $*"; }
 abort() { echo "[ERROR] $*" >&2; exit 1; }
@@ -21,9 +17,7 @@ require() {
   command -v "$1" &>/dev/null || abort "'$1' is not installed or not on PATH."
 }
 
-# ---------------------------------------------------------------------------
 # Pre-flight
-# ---------------------------------------------------------------------------
 require gcloud
 
 info "Checking gcloud authentication..."
@@ -40,9 +34,7 @@ if grep -q "^POSTGRES_PASSWORD=changeme$" .env; then
   warn ".env still has POSTGRES_PASSWORD=changeme — consider setting a real password."
 fi
 
-# ---------------------------------------------------------------------------
-# 1. Create VM (idempotent — skips if already exists)
-# ---------------------------------------------------------------------------
+# create VM (idempotent — skips if already exists)
 if gcloud compute instances describe "$INSTANCE_NAME" --zone="$ZONE" &>/dev/null; then
   info "VM '$INSTANCE_NAME' already exists — skipping creation."
 else
@@ -57,9 +49,7 @@ else
   sleep 20
 fi
 
-# ---------------------------------------------------------------------------
-# 2. Firewall rules (idempotent)
-# ---------------------------------------------------------------------------
+# firewall rules (idempotent)
 for RULE in allow-http allow-https; do
   if gcloud compute firewall-rules describe "$RULE" &>/dev/null; then
     info "Firewall rule '$RULE' already exists — skipping."
@@ -75,26 +65,33 @@ for RULE in allow-http allow-https; do
   fi
 done
 
-# ---------------------------------------------------------------------------
-# 3. Install Docker on VM (idempotent)
-# ---------------------------------------------------------------------------
+# install Docker on VM (idempotent — uses Docker's official apt repo)
 info "Ensuring Docker is installed on VM..."
 gcloud compute ssh "$INSTANCE_NAME" --zone="$ZONE" --command='
   set -e
   if command -v docker &>/dev/null; then
     echo "[INFO]  Docker already installed."
   else
-    echo "[INFO]  Installing Docker..."
+    echo "[INFO]  Installing Docker from official repo..."
     sudo apt-get update -qq
-    sudo apt-get install -y docker.io docker-compose-plugin
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/debian/gpg \
+      -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+      https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update -qq
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo usermod -aG docker "$USER"
     echo "[INFO]  Docker installed."
   fi
 '
 
-# ---------------------------------------------------------------------------
-# 4. Clone or pull latest code via git
-# ---------------------------------------------------------------------------
+# clone or pull latest code via git
 EXTERNAL_IP=$(gcloud compute instances describe "$INSTANCE_NAME" \
   --zone="$ZONE" \
   --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
@@ -117,9 +114,7 @@ gcloud compute ssh "$INSTANCE_NAME" --zone="$ZONE" --command="
 info "Copying .env to VM..."
 gcloud compute scp .env "${INSTANCE_NAME}:~/${REMOTE_DIR}/.env" --zone="$ZONE"
 
-# ---------------------------------------------------------------------------
-# 5. Start / update the stack
-# ---------------------------------------------------------------------------
+# start / update the stack
 info "Bringing up Docker Compose stack on VM..."
 gcloud compute ssh "$INSTANCE_NAME" --zone="$ZONE" --command="
   set -e
@@ -128,9 +123,7 @@ gcloud compute ssh "$INSTANCE_NAME" --zone="$ZONE" --command="
   sg docker -c 'docker compose up -d --build'
 "
 
-# ---------------------------------------------------------------------------
 # Done
-# ---------------------------------------------------------------------------
 info "Deployed successfully!"
 info "External IP : $EXTERNAL_IP"
 info "To stream logs: gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command='cd ~/${REMOTE_DIR} && docker compose logs -f app'"
