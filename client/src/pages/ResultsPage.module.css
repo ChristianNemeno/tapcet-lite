@@ -1,0 +1,123 @@
+.page {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.summary {
+  padding: 32px;
+  margin-bottom: 24px;
+  text-align: center;
+  animation: float-in 0.55s ease-out both;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-size: 0.72rem;
+}
+
+.title {
+  margin: 0;
+  font-family: 'Syne', system-ui, sans-serif;
+  font-size: clamp(3rem, 10vw, 6rem);
+  line-height: 0.9;
+}
+
+.score {
+  margin: 16px 0 0;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.retryButton {
+  margin-top: 24px;
+  padding: 14px 22px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.14));
+  color: var(--text);
+}
+
+.results {
+  display: grid;
+  gap: 18px;
+}
+
+.card {
+  padding: 22px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.correctBadge,
+.incorrectBadge,
+.index {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.correctBadge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--correct);
+}
+
+.incorrectBadge {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+}
+
+.index {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.question {
+  margin: 0 0 18px;
+  font-family: 'Syne', system-ui, sans-serif;
+  font-size: 1.35rem;
+}
+
+.answerBlock + .answerBlock {
+  margin-top: 14px;
+}
+
+.label {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.value {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .page {
+    width: min(100%, calc(100% - 24px));
+    padding-top: 20px;
+    padding-bottom: 36px;
+  }
+
+  .summary,
+  .card {
+    padding: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: start;
+  }
+}

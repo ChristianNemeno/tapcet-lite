@@ -1,0 +1,10 @@
+# Local development / demo mode:
+# :80 {
+#     reverse_proxy app:3001
+# }
+
+# Production mode:
+# Replace tappy.nenome.online with your real domain, then comment out the :80 block above.
+tappy.nenome.online {
+    reverse_proxy app:3001
+}
