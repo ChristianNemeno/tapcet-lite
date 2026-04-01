@@ -16,8 +16,7 @@ services:
       retries: 10
 
   app:
-    build:
-      context: .
+    image: ghcr.io/christiannemeno/tapcet-lite:latest
     container_name: quiz-app
     restart: unless-stopped
     environment:

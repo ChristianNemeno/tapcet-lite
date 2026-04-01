@@ -1,22 +1,23 @@
 :root {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  line-height: 1.5;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
-  color: #e8eef4;
-  background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 35%),
-    linear-gradient(160deg, #05080e 0%, #08111d 52%, #05080e 100%);
-  --bg: #05080e;
-  --accent: #38bdf8;
-  --accent-dim: rgba(56, 189, 248, 0.1);
-  --accent-glow: rgba(56, 189, 248, 0.22);
-  --correct: #10b981;
-  --danger: #f87171;
-  --text: #e8eef4;
-  --text-muted: #8ea2b4;
-  --surface: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-accent: rgba(56, 189, 248, 0.3);
+  color: #ffffff;
+  background-color: #33332d;
+
+  --bg: #33332d;
+  --surface: #3d3d36;
+  --surface-hover: #46463e;
+  --border: #555548;
+  --border-accent: #82f7eb;
+  --text: #ffffff;
+  --text-muted: #b0b09a;
+  --accent: #82f7eb;
+  --accent-dim: rgba(130, 247, 235, 0.12);
+  --correct: #82f7eb;
+  --incorrect: #f47c7c;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
 }
 
 * {
@@ -32,6 +33,7 @@ body,
 body {
   margin: 0;
   min-height: 100vh;
+  background-color: var(--bg);
   color: var(--text);
 }
 
@@ -44,18 +46,84 @@ button {
   cursor: pointer;
 }
 
-.glass {
+/* Card utility — flat bordered panels (no glass) */
+.card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border: 3px solid var(--border);
+  border-radius: 5px;
+}
+
+/* Primary button: invert on hover, triple-border shadow */
+.btn-primary {
+  display: inline-block;
+  padding: 0.65rem 1.4rem;
+  background: transparent;
+  color: var(--accent);
+  border: 3px solid var(--accent);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  box-shadow: -3px 5px 0 var(--accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: var(--accent);
+  color: var(--bg);
+  outline: none;
+}
+
+.btn-primary:active {
+  box-shadow: -1px 2px 0 var(--accent);
+  transform: translate(-1px, 2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Secondary button: subtle border */
+.btn-secondary {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.88rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+  border-color: var(--text-muted);
+  color: var(--text);
+  outline: none;
+}
+
+/* Eyebrow label */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin: 0 0 10px;
 }
 
 @keyframes float-in {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
 
   to {

@@ -1,162 +1,190 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import ProgressBar from '../components/ProgressBar';
 import Spinner from '../components/Spinner';
+import Timer from '../components/Timer';
 import { fetchQuiz, submitQuiz } from '../api';
 import type { AnswersMap, QuizResponse, SubmitQuizResponse } from '../types';
 import styles from './QuizPage.module.css';
 
 interface QuizPageProps {
+  quizId: string;
+  nickname: string;
+  timeLimitSeconds: number | null;
   onResults: (results: SubmitQuizResponse) => void;
 }
 
-export default function QuizPage({ onResults }: QuizPageProps) {
+export default function QuizPage({ quizId, nickname, timeLimitSeconds, onResults }: QuizPageProps) {
   const [quiz, setQuiz] = useState<QuizResponse | null>(null);
   const [answers, setAnswers] = useState<AnswersMap>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadQuiz() {
+    async function load() {
       try {
-        setLoading(true);
-        setError(null);
-        const nextQuiz = await fetchQuiz();
-
-        if (!cancelled) {
-          setQuiz(nextQuiz);
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(
-            loadError instanceof Error ? loadError.message : 'Failed to load quiz.',
-          );
-        }
+        const data = await fetchQuiz(quizId);
+        if (!cancelled) setQuiz(data);
+      } catch (err) {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : 'Failed to load quiz.');
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
-    void loadQuiz();
+    void load();
+    return () => { cancelled = true; };
+  }, [quizId]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  function selectAnswer(questionId: string, optionIndex: number) {
-    setAnswers((previous) => ({
-      ...previous,
-      [questionId]: optionIndex,
-    }));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!quiz) {
-      return;
-    }
-
-    try {
+  const handleSubmit = useCallback(
+    async (currentAnswers: AnswersMap) => {
+      if (!quiz || submittingRef.current) return;
+      submittingRef.current = true;
       setSubmitting(true);
       setError(null);
-      const results = await submitQuiz(answers);
-      onResults(results);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : 'Failed to submit quiz.',
-      );
-    } finally {
-      setSubmitting(false);
-    }
+
+      try {
+        const results = await submitQuiz(quiz.id, currentAnswers, nickname);
+        onResults(results);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to submit quiz.');
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
+    },
+    [quiz, nickname, onResults],
+  );
+
+  const handleTimerExpire = useCallback(() => {
+    void handleSubmit(answers);
+  }, [handleSubmit, answers]);
+
+  if (loading) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.centered}><Spinner /></div>
+      </main>
+    );
   }
 
-  const totalQuestions = quiz?.questions.length ?? 0;
-  const isComplete = totalQuestions > 0 && Object.keys(answers).length === totalQuestions;
+  if (error && !quiz) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.feedback}><p>{error}</p></div>
+      </main>
+    );
+  }
+
+  if (!quiz) return null;
+
+  const questions = quiz.questions;
+  const question = questions[currentIndex];
+  const total = questions.length;
+  const answeredCount = Object.keys(answers).length;
+  const isLast = currentIndex === total - 1;
+  const currentAnswered = question ? answers[question.id] !== undefined : false;
+
+  function selectAnswer(questionId: string, optionIndex: number) {
+    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+  }
+
+  function goNext() {
+    if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
+  }
+
+  function goPrev() {
+    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+  }
 
   return (
     <main className={styles.page}>
-      <section className={`glass ${styles.hero}`}>
-        <p className={styles.eyebrow}>Live Demo</p>
-        <h1 className={styles.title}>Quiz App</h1>
-        <p className={styles.subtitle}>
-          Load one quiz, pick one answer per question, submit once, and get a full
-          scored breakdown back from the server.
-        </p>
+      <header className={styles.header}>
+        <div className={styles.headerTop}>
+          <div className={styles.quizMeta}>
+            <p className="eyebrow">{quiz.title}</p>
+            <p className={styles.nickname}>Playing as <strong>{nickname}</strong></p>
+          </div>
+          {timeLimitSeconds !== null && (
+            <Timer totalSeconds={timeLimitSeconds} onExpire={handleTimerExpire} />
+          )}
+        </div>
+        <ProgressBar current={answeredCount} total={total} />
+      </header>
+
+      <section className={styles.questionCard} key={question.id}>
+        <div className={styles.questionHeader}>
+          <span className={styles.questionBadge}>
+            Question {currentIndex + 1} of {total}
+          </span>
+        </div>
+
+        <h2 className={styles.questionText}>{question.text}</h2>
+
+        <div className={styles.options}>
+          {question.options.map((option, i) => {
+            const checked = answers[question.id] === i;
+            return (
+              <label
+                key={`${question.id}-${i}`}
+                className={`${styles.option} ${checked ? styles.optionActive : ''}`}
+              >
+                <input
+                  type="radio"
+                  name={question.id}
+                  checked={checked}
+                  onChange={() => selectAnswer(question.id, i)}
+                />
+                <span className={styles.optionLetter}>
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span>{option}</span>
+              </label>
+            );
+          })}
+        </div>
       </section>
 
-      <section className={`glass ${styles.panel}`}>
-        {loading ? (
-          <div className={styles.centered}>
-            <Spinner />
-          </div>
-        ) : error ? (
-          <div className={styles.feedback}>
-            <p>{error}</p>
-          </div>
-        ) : quiz ? (
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.header}>
-              <div>
-                <p className={styles.eyebrow}>Current Quiz</p>
-                <h2 className={styles.quizTitle}>{quiz.title}</h2>
-              </div>
-              <p className={styles.progress}>
-                {Object.keys(answers).length}/{totalQuestions} answered
-              </p>
-            </div>
+      {error && <p className={styles.errorText}>{error}</p>}
 
-            <div className={styles.questions}>
-              {quiz.questions.map((question, questionIndex) => (
-                <article key={question.id} className={`glass ${styles.card}`}>
-                  <div className={styles.cardHeader}>
-                    <span className={styles.badge}>Question {questionIndex + 1}</span>
-                    <p className={styles.questionText}>{question.text}</p>
-                  </div>
+      <nav className={styles.nav}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={goPrev}
+          disabled={currentIndex === 0}
+        >
+          ← Prev
+        </button>
 
-                  <div className={styles.options}>
-                    {question.options.map((option, optionIndex) => {
-                      const checked = answers[question.id] === optionIndex;
+        <span className={styles.navLabel}>
+          {answeredCount}/{total} answered
+        </span>
 
-                      return (
-                        <label
-                          key={`${question.id}-${optionIndex}`}
-                          className={`${styles.option} ${checked ? styles.optionActive : ''}`}
-                        >
-                          <input
-                            type="radio"
-                            name={question.id}
-                            checked={checked}
-                            onChange={() => selectAnswer(question.id, optionIndex)}
-                          />
-                          <span>{option}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={!isComplete || submitting}
-            >
-              {submitting ? 'Submitting...' : 'Submit Quiz'}
-            </button>
-          </form>
+        {isLast ? (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => void handleSubmit(answers)}
+            disabled={submitting}
+          >
+            {submitting ? 'Submitting...' : 'Submit →'}
+          </button>
         ) : (
-          <div className={styles.feedback}>
-            <p>No quiz is currently available.</p>
-          </div>
+          <button
+            type="button"
+            className={`btn-secondary ${currentAnswered ? styles.nextActive : ''}`}
+            onClick={goNext}
+          >
+            Next →
+          </button>
         )}
-      </section>
+      </nav>
     </main>
   );
 }

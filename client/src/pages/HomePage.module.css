@@ -1,0 +1,151 @@
+.page {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+}
+
+.hero {
+  margin-bottom: 56px;
+  animation: float-in 0.55s ease-out both;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-family: var(--font-mono);
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.catalog {
+  animation: float-in 0.55s ease-out 0.1s both;
+}
+
+.sectionTitle {
+  margin: 0 0 24px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  border-bottom: 3px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.quizCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: 5px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  box-shadow: -4px 6px 0 transparent;
+}
+
+.quizCard:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+  box-shadow: -4px 6px 0 var(--accent);
+  transform: translate(1px, -1px);
+}
+
+.quizCard:active {
+  transform: translate(-2px, 2px);
+  box-shadow: -1px 2px 0 var(--accent);
+}
+
+.cardTop {
+  flex: 1;
+}
+
+.quizTitle {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.metaBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.timeBadge {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.centered {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+}
+
+.feedback {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  border: 3px solid var(--border);
+  border-radius: 5px;
+}
+
+@media (max-width: 720px) {
+  .page {
+    width: min(100%, calc(100% - 24px));
+    padding-top: 28px;
+    padding-bottom: 48px;
+  }
+
+  .hero {
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
