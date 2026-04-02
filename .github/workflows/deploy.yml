@@ -52,7 +52,6 @@ jobs:
           script: |
             set -e
             cd ~/tapcet-lite
-            docker compose pull app
-            docker compose up -d app
-            docker compose up -d caddy
+            docker compose pull
+            docker compose up -d
             docker image prune -f

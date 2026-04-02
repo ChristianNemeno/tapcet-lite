@@ -45,7 +45,7 @@ export default function HomePage({ onSelectQuiz }: HomePageProps) {
     <main className={styles.page}>
       <header className={styles.hero}>
         <p className="eyebrow">Welcome</p>
-        <h1 className={styles.title}>Quiz<span className={styles.accent}>.</span></h1>
+        <h1 className={styles.title}>Tapcet<span className={styles.accent}>.</span></h1>
         <p className={styles.subtitle}>
           Pick a topic, enter your nickname, and race the clock. Your best scores go on the leaderboard.
         </p>
